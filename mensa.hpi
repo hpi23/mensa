@@ -1,11 +1,12 @@
-beantrage geld von Hasso;
-beantrage drucke von Drucker;
-beantrage http von Netzwerk;
+beantrage Geld von Hasso;
+beantrage Drucke von Drucker;
+beantrage Http von Netzwerk;
 beantrage Gliedere_JSON von Textverarbeitung;
 beantrage Zergliedere_JSON von Textverarbeitung;
 beantrage Formatiere von Textverarbeitung;
-beantrage aufgeben von libSAP;
-beantrage zeit von Uhr;
+beantrage Aufgeben von libSAP;
+beantrage Umgebungsvariablen von libSAP;
+beantrage Zeit von Uhr;
 
 datentyp Speise auf Objekt {
     Zeichenkette Titel /
@@ -14,8 +15,6 @@ datentyp Speise auf Objekt {
 };
 
 setze Zeichenkette MENSA_URL auf "https://www.studentenwerk-potsdam.de/essen/unsere-mensen/detailinfos?tx_ddfmensa_ddfmensajson%5Binterneid%5D=353&type=14529821235&cHash=2baa819c66f7bd7c19a21693a97b5f34";
-setze Zeichenkette DISCORD_URL auf "https://discordapp.com/api/webhooks/1157059983079383072/kR076YC_TA_dt2nY01DGCpbLH7KsafPaIw2Jg2oCZBzBXZSZM1bFTGKOL5Z-bjUr9yFT";
-
 
 setze Zahl AUSLÖSER_STUNDE auf 07;
 setze Zahl AUSLÖSER_MINUTE auf 00;
@@ -27,32 +26,38 @@ funk Einschreibung(Zahl Matrikelnummer) ergibt Nichts {
 }
 
 funk Studium() ergibt Nichts {
-    drucke(Formatiere("Benachrichtigung wird um %2d:%2d ausgeführt werden." / AUSLÖSER_STUNDE / AUSLÖSER_MINUTE));
+    falls !Umgebungsvariablen().Schlüssel().Enthält("MENSA_DISCORD_URL") {
+        Drucke("Umgebungsvariable `MENSA_DISCORD_URL` nicht gefunden.");
+        Aufgeben(1);
+    }
+    setze Zeichenkette Discord_Url auf Umgebungsvariablen().Nehmen("MENSA_DISCORD_URL") als Zeichenkette;
+
+    Drucke(Formatiere("Benachrichtigung wird um %2d:%2d ausgeführt werden." / AUSLÖSER_STUNDE / AUSLÖSER_MINUTE));
 
     solange ja {
-        falls zeit().Stunde == AUSLÖSER_STUNDE && zeit().Minute == AUSLÖSER_MINUTE {
-            Aktualisiere();
-        drucke(Formatiere("Schlummere 12h (Zeit = %2d:%2d)..." / zeit().Stunde / zeit().Minute));
-            schlummere(60F * 60F * 12F);
+        falls Zeit().Stunde == AUSLÖSER_STUNDE && Zeit().Minute == AUSLÖSER_MINUTE {
+            Aktualisiere(Discord_Url);
+        Drucke(Formatiere("Schlummere 12h (Zeit = %2d:%2d)..." / Zeit().Stunde / Zeit().Minute));
+            Schlummere(60F * 60F * 12F);
         }
 
-        drucke(Formatiere("Schlummere (Zeit = %2d:%2d)..." / zeit().Stunde / zeit().Minute));
-        schlummere(60F);
+        Drucke(Formatiere("Schlummere (Zeit = %2d:%2d)..." / Zeit().Stunde / Zeit().Minute));
+        Schlummere(60F);
     }
 }
 
-funk Aktualisiere() ergibt Nichts {
-    drucke("\t=> Lade Speiseangebot aus dem Internet herunter...");
+funk Aktualisiere(Zeichenkette Discord_Url) ergibt Nichts {
+    Drucke("\t=> Lade Speiseangebot aus dem Internet herunter...");
     setze Liste von Speise Speisen auf Lade_Speiseangebot();
-    drucke(Formatiere("\t=> Speiseangebot bereit. %d Speisen geladen." / Speisen.Länge()));
-    drucke("\t=> Sende Discord Nachricht...");
-    Sende_Discord_Nachricht(Speisen);
-    drucke("\t=> Discord Nachricht erfolgreich gesendet.");
+    Drucke(Formatiere("\t=> Speiseangebot bereit. %d Speisen geladen." / Speisen.Länge()));
+    Drucke("\t=> Sende Discord Nachricht...");
+    Sende_Discord_Nachricht(Speisen / Discord_Url);
+    Drucke("\t=> Discord Nachricht erfolgreich gesendet.");
 }
 
 funk Lade_Speiseangebot() ergibt Liste von Speise {
     setze Zeichenkette Körper auf "";
-    setze Zahl Antwort_Zahl auf http(
+    setze Zahl Antwort_Zahl auf Http(
         "GET" /
         MENSA_URL /
         "" /
@@ -61,7 +66,7 @@ funk Lade_Speiseangebot() ergibt Liste von Speise {
     );
 
     falls Antwort_Zahl != 200 {
-        aufgeben(1);
+        Aufgeben(1);
     }
 
     setze Speicherbox Res auf Zergliedere_JSON(Körper) als Speicherbox;
@@ -85,7 +90,7 @@ funk Lade_Speiseangebot() ergibt Liste von Speise {
             setze Zeichenkette Beschreibung auf Angebote[Zähler].Nehmen("beschreibung") als Zeichenkette;
             setze Zeichenkette Titel auf Angebote[Zähler].Nehmen("titel") als Zeichenkette;
             setze Fließkommazahl Preis auf Angebote[Zähler].Nehmen("preis_s") als Zeichenkette als Fließkommazahl;
-            drucke(Titel / ":" / Beschreibung / "kostet" / Preis / "€");
+            Drucke(Titel / ":" / Beschreibung / "kostet" / Preis / "€");
 
             Resultat.Hinzufügen(erstelle {
                 Zeichenkette Titel auf Titel /
@@ -101,7 +106,7 @@ funk Lade_Speiseangebot() ergibt Liste von Speise {
 }
 
 
-funk Sende_Discord_Nachricht(Liste von Speise Speiseangebot) ergibt Nichts {
+funk Sende_Discord_Nachricht(Liste von Speise Speiseangebot / Zeichenkette Discord_Url) ergibt Nichts {
     datentyp Feld auf Objekt {
         Zeichenkette name /
         Zeichenkette value /
@@ -145,7 +150,7 @@ funk Sende_Discord_Nachricht(Liste von Speise Speiseangebot) ergibt Nichts {
         "Heute ist die Mensa geschlossen!"
     };
 
-    setze Zeitstempel Jetzt auf zeit();
+    setze Zeitstempel Jetzt auf Zeit();
     setze Zeichenkette Titel auf Formatiere("Angebot Mensa Griebnitzsee vom %2d.%2d.%d" / Jetzt.Kalendar_Tag / Jetzt.Monat / Jetzt.Jahr);
 
     setze Embed HauptEinbettung auf erstelle {
@@ -169,15 +174,15 @@ funk Sende_Discord_Nachricht(Liste von Speise Speiseangebot) ergibt Nichts {
 
     setze Zeichenkette Antwort_Körper auf "";
 
-    setze Zahl Antwort_Zahl auf http(
+    setze Zahl Antwort_Zahl auf Http(
         "POST" /
-        DISCORD_URL /
+        Discord_Url /
         Körper_Zeichenkette /
         [ erstelle { Zeichenkette Schlüssel auf "Content-Type" / Zeichenkette Wert auf "application/json" } ] /
         &Antwort_Körper /
     );
 
     falls Antwort_Zahl != 204 {
-        aufgeben(Antwort_Zahl);
+        Aufgeben(Antwort_Zahl);
     }
 }
