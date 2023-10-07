@@ -36,8 +36,8 @@ funk Studium() ergibt Nichts {
     solange ja {
         falls Zeit().Stunde == AUSLÖSER_STUNDE && Zeit().Minute == AUSLÖSER_MINUTE {
             Aktualisiere(Discord_Url);
-        Drucke(Formatiere("Schlummere 12h (Zeit = %2d:%2d)..." / Zeit().Stunde / Zeit().Minute));
-            Schlummere(60F * 60F * 12F);
+        Drucke(Formatiere("Schlummere Länger (Zeit = %2d:%2d)..." / Zeit().Stunde / Zeit().Minute));
+            Schlummere(60F * 60F);
         }
 
         Drucke(Formatiere("Schlummere (Zeit = %2d:%2d)..." / Zeit().Stunde / Zeit().Minute));
