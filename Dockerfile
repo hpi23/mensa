@@ -1,18 +1,19 @@
-FROM rust as builder
+FROM archlinux as builder
 
-RUN USER=root cargo install --git=https://github.com/hpi23/sprache hpi-cli
+RUN pacman -Sy git rustup gcc curl make gcc bat --noconfirm
 
-FROM debian
+RUN git clone https://github.com/hpi23/sprache /root/sprache
+RUN git clone https://github.com/hpi23/c-projects /root/sprache/crates/hpi-transpiler-c/hpi-c-tests
+WORKDIR /root/sprache/crates/hpi-transpiler-c/
 
-RUN apt-get update \
-&& apt-get install openssl -y
+RUN ls
 
-COPY --from=builder /usr/local/cargo/bin/hpi-cli /bin/hpi-cli
+RUN rustup default stable
 
-RUN mkdir /app
+COPY ./mensa.hpi ./mensa.hpi
+RUN make main HPI_FILE=mensa.hpi
 
-WORKDIR /app/
+FROM archlinux
+COPY --from=builder /root/sprache/crates/hpi-transpiler-c/main /bin/mensa
 
-COPY ./mensa.hpi /app/mensa.hpi
-
-CMD ["/bin/hpi-cli", "run", "/app/mensa.hpi"]
+CMD ["/bin/mensa"]

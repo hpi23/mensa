@@ -10,7 +10,8 @@ beantrage Zeit von Uhr;
 
 datentyp Speise auf Objekt {
     Zeichenkette Titel /
-    Zeichenkette Beschreibung
+    Zeichenkette Beschreibung /
+    Fließkommazahl Preis /
 };
 
 setze Zeichenkette MENSA_URL auf "https://swp.webspeiseplan.de/index.php?token=55ed21609e26bbf68ba2b19390bf7961&model=menu&location=9601&languagetype=1&_=1696420791394";
@@ -31,7 +32,12 @@ funk Studium() ergibt Nichts {
     }
     setze Zeichenkette Discord_Url auf Umgebungsvariablen().Nehmen("MENSA_DISCORD_URL") als Zeichenkette;
 
-    Drucke(Formatiere("Benachrichtigung wird um %2d:%2d ausgeführt werden." / AUSLÖSER_STUNDE / AUSLÖSER_MINUTE));
+    falls Umgebungsvariablen().Schlüssel().Enthält("MENSA_TRIGGER_NOW") {
+        Aktualisiere(Discord_Url);
+        Aufgeben(0);
+    } sonst {
+        Drucke(Formatiere("Benachrichtigung wird um %2d:%2d ausgeführt werden." / AUSLÖSER_STUNDE / AUSLÖSER_MINUTE));
+    }
 
     solange ja {
         falls Zeit().Stunde == AUSLÖSER_STUNDE && Zeit().Minute == AUSLÖSER_MINUTE {
@@ -88,6 +94,10 @@ funk Lade_Speiseangebot() ergibt Liste von Speise {
             setze Speicherbox Gericht auf Gerichte[Gerichtzähler];
             Gerichtzähler += 1;
 
+
+            setze Speicherbox ZusatzInfos auf Gericht.Nehmen("zusatzinformationen") als Speicherbox;
+            setze Fließkommazahl Preis auf ZusatzInfos.Nehmen("mitarbeiterpreisDecimal2") als Fließkommazahl;
+
             setze Speicherbox GerichtInfos auf Gericht.Nehmen("speiseplanAdvancedGericht") als Speicherbox;
             setze Zeichenkette GerichtDatumRoh auf GerichtInfos.Nehmen("datum") als Zeichenkette;
 
@@ -95,7 +105,9 @@ funk Lade_Speiseangebot() ergibt Liste von Speise {
             setze Zeichenkette HeuteDatum auf Formatiere("%d-%2d-%2d" / Zeit().Jahr / Zeit().Monat / Zeit().Kalendar_Tag);
             setze Zeichenkette Gerichtname auf GerichtInfos.Nehmen("gerichtname") als Zeichenkette;
 
-            falls (GerichtDatum != HeuteDatum) || (Gerichtname.Startet_Mit("Salatbuffet")) {
+            falls (GerichtDatum != HeuteDatum)
+                || (Gerichtname.Startet_Mit("Salatbuffet"))
+                || (Gerichtname.Enthält("Relevo")) {
                 Drucke("Überspringe Gericht:" / Gerichtname.Ersetze("\n" / " "));
                 weitermachen;
             }
@@ -104,8 +116,9 @@ funk Lade_Speiseangebot() ergibt Liste von Speise {
             Drucke("Relevantes Gericht heute:" / Gerichtname);
 
             Resultat.Hinzufügen(erstelle {
-                Zeichenkette Titel auf Formatiere("Angebot %d" / Gerichtzähler) /
-                Zeichenkette Beschreibung auf Gerichtname
+                Zeichenkette Titel auf Formatiere("Angebot %d" / Resultat.Länge() + 1) /
+                Zeichenkette Beschreibung auf Gerichtname /
+                Fließkommazahl Preis auf Preis /
             });
 
         }
@@ -119,6 +132,8 @@ funk Lade_Speiseangebot() ergibt Liste von Speise {
 
 
 funk Sende_Discord_Nachricht(Liste von Speise Speiseangebot / Zeichenkette Discord_Url) ergibt Nichts {
+    Drucke("Sende Discord Nachricht...");
+
     datentyp Feld auf Objekt {
         Zeichenkette name /
         Zeichenkette value /
@@ -148,7 +163,7 @@ funk Sende_Discord_Nachricht(Liste von Speise Speiseangebot / Zeichenkette Disco
     solange (Zähler < Speiseangebot.Länge()) {
         Felder.Hinzufügen(
             erstelle {
-                Zeichenkette name auf Speiseangebot[Zähler].Titel /
+                Zeichenkette name auf Formatiere("%s (%.2f€)" / Speiseangebot[Zähler].Titel / Speiseangebot[Zähler].Preis ) /
                 Zeichenkette value auf Speiseangebot[Zähler].Beschreibung
             }
         );
@@ -197,4 +212,6 @@ funk Sende_Discord_Nachricht(Liste von Speise Speiseangebot / Zeichenkette Disco
     falls Antwort_Zahl != 204 {
         Aufgeben(Antwort_Zahl);
     }
+
+    Drucke("Discord Nachricht gesendet!");
 }
