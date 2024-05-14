@@ -11,7 +11,7 @@ RUN ls
 
 RUN rustup default stable
 
-COPY ./mensa.hpi ./mensa.hpi
+COPY ./discord-bot.hpi ./mensa.hpi
 RUN make init -j 1 \
     && make main HPI_FILE=mensa.hpi
 

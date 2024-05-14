@@ -1,0 +1,184 @@
+beantrage Geld von Hasso;
+beantrage Drucke von Drucker;
+beantrage Http von Netzwerk;
+beantrage Gliedere_JSON von Textverarbeitung;
+beantrage Zergliedere_JSON von Textverarbeitung;
+beantrage Formatiere von Textverarbeitung;
+beantrage Aufgeben von libSAP;
+beantrage Umgebungsvariablen von libSAP;
+beantrage Argumente von libSAP;
+beantrage Zeit von Uhr;
+beantrage Versions_Nummer von libSAP;
+
+
+setze Zeichenkette KEINE_DATEN auf "! OBACHT: Keine Daten vorhanden";
+setze Wahrheitswert ZEIGE_MEHR_NACHRICHTEN auf nein;
+
+
+funk Bewerbung() ergibt Zeichenkette { "Hallo Welt!" }
+
+funk Einschreibung(Zahl Matrikelnummer) ergibt Nichts {
+  setze Zahl _ auf Matrikelnummer;
+}
+
+funk Studium() ergibt Nichts {
+    setze Liste von Zeichenkette Args auf Argumente();
+    falls Args.Länge() == 1 {
+        Drucke("Erwartete Befehlszeilenargument <mensa-ort>, bekam nichts");
+        Aufgeben(69);
+    }
+
+    setze Zeichenkette Eingabe auf Args[1];
+
+    setze Zahl Mensa_Ort auf 0;
+
+    falls Eingabe == "hpi" {
+        ändere Mensa_Ort auf MENSA_GRIEBNITZSEE;
+    } sonst falls Eingabe == "filmuni" {
+        ändere Mensa_Ort auf MENSA_FILMUNI;
+    } sonst {
+        Drucke(Formatiere("Unbekannter Standort: <%s>\nValide Standorte:\n    - hpi\n    - filmuni" / Eingabe));
+        Aufgeben(42);
+    }
+
+    // Erwarte einen Wahrheitswert fuer logging.
+    falls Args.Länge() == 3 {
+        ändere Eingabe auf Args[2];
+        falls Eingabe == "schreibe" {
+            ändere ZEIGE_MEHR_NACHRICHTEN auf ja;
+        }
+    }
+
+    Drucke(Formatiere("FAHRE HPI script version V%s für LINUX" / Versions_Nummer()));
+    Drucke("========================================================");
+
+    Aktualisiere(Mensa_Ort);
+}
+
+funk Aktualisiere(Zahl Mensa_Ort) ergibt Nichts {
+    Drucke("    ~> Lade Speiseangebot aus dem Internet herunter...");
+    setze Liste von Speise Speisen auf Lade_Speiseangebot(Mensa_Ort);
+    Drucke(Formatiere("    ~> Speiseangebot bereit. %d Speisen geladen." / Speisen.Länge()));
+
+
+    setze Liste von Speise Mittagessen auf [];
+    setze Liste von Speise Abendessen auf [];
+
+    setze Zahl Zähler auf 0;
+    solange Zähler < Speisen.Länge() {
+        setze Speise S auf Speisen[Zähler];
+        setze Zeichenkette ZeitSlot auf S.ZeitSlot.Ersetze(" " / "");
+        falls ZeitSlot.Enthält("Mittagessen") {
+            Mittagessen.Hinzufügen(S);
+        } sonst falls ZeitSlot.Enthält("Abendessen") {
+            Abendessen.Hinzufügen(S);
+        } sonst falls ZeitSlot.Enthält("Automatenplan") {
+            falls ZEIGE_MEHR_NACHRICHTEN {
+                Drucke("[NACHRICHT] Ignoriere Automat");
+            }
+        } sonst {
+            Drucke(Formatiere("Nicht unterstützter ZeitSlot: `%s`" / ZeitSlot));
+            Aufgeben(1);
+        }
+        Zähler += 1;
+    }
+
+
+    Drucke("======= MITTAGESSEN ========");
+    ändere Zähler auf 0;
+    solange Zähler < Mittagessen.Länge() {
+        setze Speise S auf Mittagessen[Zähler];
+        Drucke(Formatiere("    - %s | %.2f€ | %s" / S.Titel / S.Preis / S.Beschreibung));
+        Zähler += 1;
+    }
+
+    falls Zähler == 0 {
+        // HOLY BALLS: this fails to compile if there is the ; missing
+        Drucke("    " / KEINE_DATEN);
+    }
+
+    Drucke("======== ABENDESSEN ========");
+    ändere Zähler auf 0;
+    solange Zähler < Abendessen.Länge() {
+        setze Speise S auf Abendessen[Zähler];
+        Drucke(Formatiere("    - %s | %.2f€ | %s" / S.Titel / S.Preis / S.Beschreibung));
+        Zähler += 1;
+    }
+
+    falls Zähler == 0 {
+        // HOLY BALLS: this fails to compile if there is the ; missing
+        Drucke("    " / KEINE_DATEN);
+    }
+}
+
+funk Lade_Speiseangebot_old(Zahl Mensa_Ort) ergibt Liste von Speise {
+    setze Zeichenkette Körper auf "";
+    setze Zahl Antwort_Zahl auf Http(
+        "GET" /
+        Formatiere(MENSA_URL_GENERISCH / Mensa_Ort) /
+        "" /
+        [
+            erstelle {
+                Zeichenkette Schlüssel auf "Referer" /
+                Zeichenkette Wert auf "https://swp.webspeiseplan.de/menu" /
+            }
+        ] /
+        &Körper /
+    );
+
+    falls Antwort_Zahl != 200 {
+        Aufgeben(1);
+    }
+
+    setze Speicherbox Res auf Zergliedere_JSON(Körper) als Speicherbox;
+    setze Liste von Speicherbox ContentRes auf Res.Nehmen("content") als Liste von Speicherbox;
+    setze Zahl Zähler auf 0;
+
+    setze Liste von Speise Resultat auf [];
+
+    solange Zähler < ContentRes.Länge() {
+        setze Speicherbox ResTemp auf ContentRes[Zähler];
+        setze Liste von Speicherbox Gerichte auf ResTemp.Nehmen("speiseplanGerichtData") als Liste von Speicherbox;
+        setze Speicherbox SpeiseplanAdvanced auf ResTemp.Nehmen("speiseplanAdvanced") als Speicherbox;
+        setze Zeichenkette ZeitSlot auf SpeiseplanAdvanced.Nehmen("titel") als Zeichenkette;
+
+        setze Zahl Gerichtzähler auf 0;
+        solange (Gerichtzähler < Gerichte.Länge()) {
+            setze Speicherbox Gericht auf Gerichte[Gerichtzähler];
+            Gerichtzähler += 1;
+
+
+            setze Speicherbox ZusatzInfos auf Gericht.Nehmen("zusatzinformationen") als Speicherbox;
+            setze Fließkommazahl Preis auf ZusatzInfos.Nehmen("mitarbeiterpreisDecimal2") als Fließkommazahl;
+
+            setze Speicherbox GerichtInfos auf Gericht.Nehmen("speiseplanAdvancedGericht") als Speicherbox;
+            setze Zeichenkette GerichtDatumRoh auf GerichtInfos.Nehmen("datum") als Zeichenkette;
+
+            setze Zeichenkette GerichtDatum auf GerichtDatumRoh.Zertrenne("T")[0];
+            setze Zeichenkette HeuteDatum auf Formatiere("%d-%2d-%2d" / Zeit().Jahr / Zeit().Monat / Zeit().Kalendar_Tag);
+            setze Zeichenkette Gerichtname auf GerichtInfos.Nehmen("gerichtname") als Zeichenkette;
+
+            falls
+                (GerichtDatum != HeuteDatum)
+                || Gerichtname.Startet_Mit("Salatbuffet")
+                || Gerichtname.Enthält("Relevo")
+                || Gerichtname.Enthält("Wochenende!")
+                || Gerichtname.Enthält("Preis pro 100g") {
+                // Drucke("Überspringe" / Gerichtname / GerichtDatum / HeuteDatum);
+                weitermachen;
+            }
+
+            Resultat.Hinzufügen(erstelle {
+                Zeichenkette ZeitSlot auf ZeitSlot /
+                Zeichenkette Titel auf Formatiere("Angebot %d" / Resultat.Länge() + 1) /
+                Zeichenkette Beschreibung auf Gerichtname /
+                Fließkommazahl Preis auf Preis /
+            });
+
+        }
+
+        Zähler += 1;
+    }
+
+    Resultat
+}
