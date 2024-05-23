@@ -68,15 +68,16 @@ funk Lade_Speiseangebot(Zahl Mensa_Ort) ergibt Liste von Speise {
 
             setze Zeichenkette GerichtDatum auf GerichtDatumRoh.Zertrenne("T")[0];
             setze Zeichenkette HeuteDatum auf Formatiere("%d-%2d-%2d" / Zeit().Jahr / Zeit().Monat / Zeit().Kalendar_Tag);
-            setze Zeichenkette Gerichtname auf GerichtInfos.Nehmen("gerichtname") als Zeichenkette;
+            setze Zeichenkette Gerichtname auf GerichtInfos
+                .Nehmen("gerichtname") als Zeichenkette;
 
             falls
                 (GerichtDatum != HeuteDatum)
                 || Gerichtname.Startet_Mit("Salatbuffet")
                 || Gerichtname.Enthält("Relevo")
                 || Gerichtname.Enthält("Wochenende!")
-                || Gerichtname.Enthält("Preis pro 100 g") {
-                // Drucke("Überspringe" / Gerichtname / GerichtDatum / HeuteDatum);
+                || Gerichtname.Enthält("Preis pro 100 g")
+                || Gerichtname.Enthält("Preis pro 100g") { // WARUM??? Es gibt einfach beide!
                 weitermachen;
             }
 
