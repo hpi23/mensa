@@ -61,6 +61,8 @@ funk Lade_Speiseangebot(Zahl Mensa_Ort) ergibt Liste von Speise {
 
 
             setze Speicherbox ZusatzInfos auf Gericht.Nehmen("zusatzinformationen") als Speicherbox;
+
+            // DIES STIRBT MANCHMAL.
             setze Fließkommazahl Preis auf ZusatzInfos.Nehmen("mitarbeiterpreisDecimal2") als Fließkommazahl;
 
             setze Speicherbox GerichtInfos auf Gericht.Nehmen("speiseplanAdvancedGericht") als Speicherbox;

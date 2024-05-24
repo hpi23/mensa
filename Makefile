@@ -17,3 +17,9 @@ build: $(HPI_FILE)
 	cp $(HPI_FILE_CONCAT) ./sprache/crates/hpi-transpiler-c/
 	cd ./sprache/crates/hpi-transpiler-c/ && make main HPI_FILE=$(HPI_FILE_CONCAT) && cp ./main ../../../$(HPI_FILE).bin
 
+.PHONY: run
+
+RARGS:=
+
+run: build
+	./$(HPI_FILE).bin $(RARGS)
