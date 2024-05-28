@@ -78,6 +78,7 @@ funk Lade_Speiseangebot(Zahl Mensa_Ort) ergibt Liste von Speise {
                 || Gerichtname.Startet_Mit("Salatbuffet")
                 || Gerichtname.Enthält("Relevo")
                 || Gerichtname.Enthält("Wochenende!")
+                || Gerichtname.Enthält("Preise pro 100 g")
                 || Gerichtname.Enthält("Preis pro 100 g")
                 || Gerichtname.Enthält("Preis pro 100g") { // WARUM??? Es gibt einfach beide!
                 weitermachen;
