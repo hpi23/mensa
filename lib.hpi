@@ -8,6 +8,7 @@ datentyp Speise auf Objekt {
     Zeichenkette Titel /
     Zeichenkette Beschreibung /
     Fließkommazahl Preis /
+    Fließkommazahl Protein /
     Zeichenkette ZeitSlot /
 };
 
