@@ -100,7 +100,24 @@ funk Lade_Speiseangebot(Zahl Mensa_Ort) ergibt Liste von Speise {
             setze Zeichenkette HeuteDatum auf Formatiere("%d-%2@0d-%2@0d" / Zeit().Jahr / Zeit().Monat / Zeit().Kalendar_Tag);
             setze Zeichenkette Gerichtname auf GerichtInfos.Nehmen("gerichtname") als Zeichenkette;
 
-             aendere Gerichtname auf Gerichtname.Ersetze("\n" / "");
+            setze Zahl Kaunter auf -1;
+
+            falls Gerichtname.Enthält("COUNTER 1") {
+                aendere Kaunter auf 1;
+            } sonst falls Gerichtname.Enthält("COUNTER 2") {
+                aendere Kaunter auf 2;
+            } sonst falls Gerichtname.Enthält("COUNTER 3") {
+                aendere Kaunter auf 3;
+            } sonst falls Gerichtname.Enthält("COUNTER 4") {
+                aendere Kaunter auf 4;
+            }
+
+             aendere Gerichtname auf Gerichtname
+                .Ersetze("\n" / "")
+                .Ersetze("COUNTER 1 / " / "")
+                .Ersetze("COUNTER 2 / " / "")
+                .Ersetze("COUNTER 3 / " / "")
+                .Ersetze("COUNTER 4 / " / "");
 
             falls
                 (GerichtDatum != HeuteDatum)
@@ -113,9 +130,14 @@ funk Lade_Speiseangebot(Zahl Mensa_Ort) ergibt Liste von Speise {
                 weitermachen;
             }
 
+            setze Zeichenkette Titel auf Formatiere("Kaunter %d" / Kaunter);
+            falls Kaunter == -1 {
+                aendere Titel auf "K/A      ";
+            }
+
             Resultat.Hinzufügen(erstelle {
                 Zeichenkette ZeitSlot auf ZeitSlot /
-                Zeichenkette Titel auf Formatiere("Angebot %d" / Resultat.Länge() + 1) /
+                Zeichenkette Titel auf Titel /
                 Zeichenkette Beschreibung auf Gerichtname /
                 Fließkommazahl Preis auf Preis /
                 Fliesskommazahl Protein_GR auf Protein /
@@ -228,6 +250,18 @@ funk Aktualisiere(Zahl Mensa_Ort) ergibt Nichts {
 }
 
 funk Gericht_Liste_Drucken(Liste von Speise Eingabe) ergibt Nichts {
+    setze Fliesskommazahl Maximale_Protein auf 0,0;
+
+    setze Zahl Zähler auf 0;
+    solange Zähler < Eingabe.Länge() {
+        setze Speise S auf Eingabe[Zähler];
+        falls S.Protein_GR > Maximale_Protein {
+            aendere Maximale_Protein auf S.Protein_GR;
+        }
+
+        Zähler += 1;
+    }
+
     setze Zahl Zähler auf 0;
     solange Zähler < Eingabe.Länge() {
         setze Speise S auf Eingabe[Zähler];
