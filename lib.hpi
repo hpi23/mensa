@@ -24,7 +24,7 @@ setze Zeichenkette MENSA_URL_GENERISCH auf "https://swp.webspeiseplan.de/index.p
 // Funktionen.
 //
 
-funk Lade_Speiseangebot(Zahl Mensa_Ort) ergibt Liste von Speise {
+funk Lade_Speiseangebot(Zahl Mensa_Ort / Zahl Tages_Verschiebung) ergibt Liste von Speise {
     setze Zeichenkette Körper auf "";
     setze Zahl Antwort_Zahl auf Http(
         "GET" /
@@ -70,7 +70,10 @@ funk Lade_Speiseangebot(Zahl Mensa_Ort) ergibt Liste von Speise {
             setze Zeichenkette GerichtDatumRoh auf GerichtInfos.Nehmen("datum") als Zeichenkette;
 
             setze Zeichenkette GerichtDatum auf GerichtDatumRoh.Zertrenne("T")[0];
-            setze Zeichenkette HeuteDatum auf Formatiere("%d-%2d-%2d" / Zeit().Jahr / Zeit().Monat / Zeit().Kalendar_Tag);
+
+            setze Zahl Verwendeter_Tag auf Zeit().Kalendar_Tag + Tages_Verschiebung;
+            setze Zeichenkette HeuteDatum auf Formatiere("%d-%2d-%2d" / Zeit().Jahr / Zeit().Monat / Verwendeter_Tag);
+            Drucke(HeuteDatum);
             setze Zeichenkette Gerichtname auf GerichtInfos
                 .Nehmen("gerichtname") als Zeichenkette;
 

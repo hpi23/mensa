@@ -45,7 +45,7 @@ setze Zeichenkette MENSA_URL_GENERISCH auf "https://swp.webspeiseplan.de/index.p
 // Funktionen.
 //
 
-funk Lade_Speiseangebot(Zahl Mensa_Ort) ergibt Liste von Speise {
+funk Lade_Speiseangebot(Zahl Mensa_Ort / Zahl Tages_Verschiebung) ergibt Liste von Speise {
     setze Zeichenkette Körper auf "";
     setze Zeichenkette URL auf Formatiere(MENSA_URL_GENERISCH / Mensa_Ort);
     setze Zahl Antwort_Zahl auf Http(
@@ -97,7 +97,8 @@ funk Lade_Speiseangebot(Zahl Mensa_Ort) ergibt Liste von Speise {
             setze Zeichenkette GerichtDatumRoh auf GerichtInfos.Nehmen("datum") als Zeichenkette;
 
             setze Zeichenkette GerichtDatum auf GerichtDatumRoh.Zertrenne("T")[0];
-            setze Zeichenkette HeuteDatum auf Formatiere("%d-%2@0d-%2@0d" / Zeit().Jahr / Zeit().Monat / Zeit().Kalendar_Tag);
+            setze Zahl Verwendeter_Tag auf Zeit().Kalendar_Tag + Tages_Verschiebung;
+            setze Zeichenkette HeuteDatum auf Formatiere("%d-%2d-%2d" / Zeit().Jahr / Zeit().Monat / Verwendeter_Tag);
             setze Zeichenkette Gerichtname auf GerichtInfos.Nehmen("gerichtname") als Zeichenkette;
 
             setze Zahl Kaunter auf -1;
@@ -173,11 +174,26 @@ funk Einschreibung(Zahl Matrikelnummer) ergibt Nichts {
 funk Studium() ergibt Nichts {
     setze Liste von Zeichenkette Args auf Argumente();
     falls Args.Länge() == 1 {
-        Drucke("Erwartete Befehlszeilenargument <mensa-ort>, bekam nichts");
+        Drucke("Erwartete Befehlszeilenargument <mensa-ort> <tages-verschiebung (wenn du willst)>, bekam nichts");
+        Aufgeben(69);
+    }
+
+    falls Args.Länge() > 3 {
+        Drucke("Erwartete Befehlszeilenargument <mensa-ort> <tages-verschiebung (wenn du willst)>, bekam vieel zu vieel");
         Aufgeben(69);
     }
 
     setze Zeichenkette Eingabe auf Args[1];
+    setze Zahl Tages_Verschiebung auf 0;
+
+    // EXTREMST ABGEFUCKT -> das sollte aber nicht kaputt gehen???
+    // SORRY, falls das jemand findet -- Mike Myueller
+    falls Args.Länge() == 3 {
+        setze Zeichenkette Parser_Eingabe auf Formatiere("{\"tage\": %s}" / Args[2]);
+        setze Speicherbox Parser_Ausgabe auf Zergliedere_JSON(Parser_Eingabe) als Speicherbox;
+        aendere Tages_Verschiebung auf Parser_Ausgabe.Nehmen("tage") als Zahl;
+        //Drucke(Tages_Verschiebung); // THIS FUCKS ITSELF IF THERE IS NO ;
+    }
 
     setze Zahl Mensa_Ort auf 0;
 
@@ -208,12 +224,15 @@ funk Studium() ergibt Nichts {
     Drucke(Formatiere("FAHRE HPI script version V%s für LINUX" / Versions_Nummer()));
     Drucke("========================================================");
 
-    Aktualisiere(Mensa_Ort);
+    Aktualisiere(Mensa_Ort / Tages_Verschiebung);
 }
 
-funk Aktualisiere(Zahl Mensa_Ort) ergibt Nichts {
+funk Aktualisiere(Zahl Mensa_Ort / Zahl Tages_Verschiebung) ergibt Nichts {
     Drucke("    ~> Lade Speiseangebot aus dem Internet herunter...");
-    setze Liste von Speise Speisen auf Lade_Speiseangebot(Mensa_Ort);
+    falls Tages_Verschiebung != 0 {
+        Drucke(Formatiere("    ~> ANMERKUNG: Speiseangebot wird um %d Tag(e) verschoben." / Tages_Verschiebung));
+    }
+    setze Liste von Speise Speisen auf Lade_Speiseangebot(Mensa_Ort / Tages_Verschiebung);
     Drucke(Formatiere("    ~> Speiseangebot bereit. %d Speisen geladen." / Speisen.Länge()));
 
 
