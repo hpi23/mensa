@@ -205,9 +205,6 @@ funk Studium() ergibt Nichts {
         Drucke(Formatiere("Gefährlicher Standort: <%s>\nValide, weniger gefährliche Standorte:\n    - hpi\n    - filmuni" / Eingabe));
         Drucke("UND: wurde in Bernau überhaupt schon Essen erfunden? - Oder gibt es da nur Salz?");
         Aufgeben(69);
-    } sonst falls Eingabe == "afrika" {
-        Drucke("@TimoNeyer - was gibt's? hast du den speiseplan gechief'd?");
-        Aufgeben(1);
     } sonst {
         Drucke(Formatiere("Unbekannter Standort: <%s>\nValide Standorte:\n    - hpi\n    - filmuni" / Eingabe));
         Aufgeben(42);
