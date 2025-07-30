@@ -31,6 +31,7 @@ datentyp Speise auf Objekt {
     Fließkommazahl Kohlenhydrate_GR /
 
     Zeichenkette ZeitSlot /
+    Zahl VeganFlaggen /
 };
 
 //
@@ -93,6 +94,16 @@ funk Lade_Speiseangebot(Zahl Mensa_Ort / Zahl Tages_Verschiebung) ergibt Liste v
             setze Fließkommazahl Zucker auf ZusatzInfos.Nehmen("nwzuckerDecimal1") als Fließkommazahl;
             setze Fließkommazahl Kohlenhydrate auf ZusatzInfos.Nehmen("nwzuckerDecimal1") als Fließkommazahl;
 
+            setze Zeichenkette GerichtmerkmaleIds auf Gericht.Nehmen("gerichtmerkmaleIds") als Zeichenkette;
+
+            setze Zahl VeganFlaggen auf 0;
+
+            falls GerichtmerkmaleIds.Enthält("228") {
+                aendere VeganFlaggen auf 2;
+            } sonst falls GerichtmerkmaleIds.Enthält("229") {
+                aendere VeganFlaggen auf 1;
+            }
+
             setze Speicherbox GerichtInfos auf Gericht.Nehmen("speiseplanAdvancedGericht") als Speicherbox;
             setze Zeichenkette GerichtDatumRoh auf GerichtInfos.Nehmen("datum") als Zeichenkette;
 
@@ -147,6 +158,7 @@ funk Lade_Speiseangebot(Zahl Mensa_Ort / Zahl Tages_Verschiebung) ergibt Liste v
                 Fliesskommazahl Zucker_GR auf Zucker /
                 Fliesskommazahl Kohlenhydrate_GR auf Kohlenhydrate /
                 Zeichenkette ZeitSlot auf ZeitSlot /
+                Zahl VeganFlaggen auf VeganFlaggen /
             });
 
         }
@@ -281,7 +293,16 @@ funk Gericht_Liste_Drucken(Liste von Speise Eingabe) ergibt Nichts {
     setze Zahl Zähler auf 0;
     solange Zähler < Eingabe.Länge() {
         setze Speise S auf Eingabe[Zähler];
-        Drucke(Formatiere("\x1b[0;32m    - %s | %.2f€ | %s\x1b[0m" / S.Titel / S.Preis / S.Beschreibung));
+
+        setze Zeichenkette VeganEmojii auf "🚫";
+
+        falls S.VeganFlaggen == 1 {
+            aendere VeganEmojii auf "🐄";
+        } sonst falls S.VeganFlaggen == 2 {
+            aendere VeganEmojii auf "🌱";
+        }
+
+        Drucke(Formatiere("\x1b[0;32m    - %s %s | %.2f€ | %s\x1b[0m" / VeganEmojii / S.Titel / S.Preis / S.Beschreibung));
         Drucke(Formatiere(
             "\x1b[0;31m        * %3@ d Kcal        * %3@ dg. Protein        * %3@ dg. Fett          * %3@ dg. Kohl.\x1b[0m"
             / S.Kcal als Zahl
