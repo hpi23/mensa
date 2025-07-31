@@ -135,6 +135,7 @@ funk Lade_Speiseangebot(Zahl Mensa_Ort / Zahl Tages_Verschiebung) ergibt Liste v
                 (GerichtDatum != HeuteDatum)
                 || Gerichtname.Startet_Mit("Salatbuffet")
                 || Gerichtname.Enthält("Relevo")
+                || Gerichtname.Enthält("kleine Schale") // WARUMMM!!!
                 || Gerichtname.Enthält("Wochenende!")
                 || Gerichtname.Enthält("Preise pro 100 g")
                 || Gerichtname.Enthält("Preis pro 100 g")
@@ -230,7 +231,7 @@ funk Studium() ergibt Nichts {
         }
     }
 
-    Drucke(Formatiere("FAHRE HPI script version V%s für LINUX" / Versions_Nummer()));
+    Drucke(Formatiere("FAHRE HPI script version V%s für LINUX oder MACAROON" / Versions_Nummer()));
     Drucke("========================================================");
 
     Aktualisiere(Mensa_Ort / Tages_Verschiebung);
