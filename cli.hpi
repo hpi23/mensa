@@ -108,8 +108,17 @@ funk Lade_Speiseangebot(Zahl Mensa_Ort / Zahl Tages_Verschiebung) ergibt Liste v
             setze Zeichenkette GerichtDatumRoh auf GerichtInfos.Nehmen("datum") als Zeichenkette;
 
             setze Zeichenkette GerichtDatum auf GerichtDatumRoh.Zertrenne("T")[0];
-            setze Zahl Verwendeter_Tag auf Zeit().Kalendar_Tag + Tages_Verschiebung;
-            setze Zeichenkette HeuteDatum auf Formatiere("%d-%2d-%2d" / Zeit().Jahr / Zeit().Monat / Verwendeter_Tag);
+
+            setze Zahl Verwendeter_Tag auf Zeit().Kalendar_Tag + Tages_Verschiebung; // OHH neinnn, das kaputtchen
+            setze Zahl Verwendeter_Monat auf Zeit().Monat; // OHH neinnn, das kaputtchen
+
+            // KB bei nicht 31 tage oder bei Dezember
+            falls Verwendeter_Tag == 32 {
+                aendere Verwendeter_Tag auf 1;
+                aendere Verwendeter_Monat auf Verwendeter_Monat + 1;
+            }
+
+            setze Zeichenkette HeuteDatum auf Formatiere("%d-%2d-%2d" / Zeit().Jahr / Verwendeter_Monat / Verwendeter_Tag);
             setze Zeichenkette Gerichtname auf GerichtInfos.Nehmen("gerichtname") als Zeichenkette;
 
             setze Zahl Kaunter auf -1;
