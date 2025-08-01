@@ -2,18 +2,22 @@ FROM archlinux as builder
 
 RUN pacman -Sy --noconfirm
 RUN pacman -S git rustup gcc curl make gcc bat --noconfirm
-
-RUN git clone https://github.com/hpi23/sprache /root/sprache
-# RUN git clone https://github.com/hpi23/c-projects /root/sprache/crates/hpi-transpiler-c/hpi-c-tests
-WORKDIR /root/sprache/crates/hpi-transpiler-c/
-
-RUN ls
-
 RUN rustup default stable
 
-COPY ./discord-bot.hpi.concat.hpi ./mensa.hpi
-RUN make init -j 1 \
-    && make main HPI_FILE=mensa.hpi
+RUN git clone https://github.com/hpi23/mensa /root/mensa
+# RUN git clone https://github.com/hpi23/c-projects /root/sprache/crates/hpi-transpiler-c/hpi-c-tests
+WORKDIR /root/mensa
+
+RUN ls
+RUN make init -j 1
+
+COPY ./cli.hpi ./mensa.hpi
+
+run make lib HPI_FILE=mensa.hpi && gcc server.c sprache/crates/hpi-transpiler-c/output.c -ggdb \                                           57%  ▓▒░
+                sprache/crates/hpi-transpiler-c/libSAP/libSAP.a \
+                -lcurl \
+                -lm \
+                -ggdb3 -o main && ./main
 
 FROM archlinux
 COPY --from=builder /root/sprache/crates/hpi-transpiler-c/main /bin/mensa

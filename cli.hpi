@@ -194,7 +194,15 @@ funk Einschreibung(Zahl Matrikelnummer) ergibt Nichts {
 }
 
 funk Studium() ergibt Nichts {
-    setze Liste von Zeichenkette Args auf Argumente();
+    setze Liste von Zeichenkette A auf Argumente();
+    Drucke(Haupt(A));
+}
+
+funk Haupt(Liste von Zeichenkette Args) ergibt Zeichenkette {
+    Drucke(Args);
+
+    setze Liste von Zeichenkette Ausgabe auf [];
+
     falls Args.Länge() == 1 {
         Drucke("Erwartete Befehlszeilenargument <mensa-ort> <tages-verschiebung (wenn du willst)>, bekam nichts");
         Aufgeben(69);
@@ -240,19 +248,22 @@ funk Studium() ergibt Nichts {
         }
     }
 
-    Drucke(Formatiere("FAHRE HPI script version V%s für LINUX oder MACAROON" / Versions_Nummer()));
-    Drucke("========================================================");
+    Ausgabe.Hinzufügen(Formatiere("FAHRE HPI script version V%s für LINUX oder MACAROON" / Versions_Nummer()));
+    Ausgabe.Hinzufügen("========================================================");
 
-    Aktualisiere(Mensa_Ort / Tages_Verschiebung);
+    Ausgabe.Hinzufügen(Aktualisiere(Mensa_Ort / Tages_Verschiebung));
+    ueberweise Verflache_Ausgabe(Ausgabe);
 }
 
-funk Aktualisiere(Zahl Mensa_Ort / Zahl Tages_Verschiebung) ergibt Nichts {
-    Drucke("    ~> Lade Speiseangebot aus dem Internet herunter...");
+funk Aktualisiere(Zahl Mensa_Ort / Zahl Tages_Verschiebung) ergibt Zeichenkette {
+    setze Liste von Zeichenkette Ausgabe auf [];
+
+    Ausgabe.Hinzufügen("    ~> Lade Speiseangebot aus dem Internet herunter...");
     falls Tages_Verschiebung != 0 {
-        Drucke(Formatiere("    ~> ANMERKUNG: Speiseangebot wird um %d Tag(e) verschoben." / Tages_Verschiebung));
+        Ausgabe.Hinzufügen(Formatiere("    ~> ANMERKUNG: Speiseangebot wird um %d Tag(e) verschoben." / Tages_Verschiebung));
     }
     setze Liste von Speise Speisen auf Lade_Speiseangebot(Mensa_Ort / Tages_Verschiebung);
-    Drucke(Formatiere("    ~> Speiseangebot bereit. %d Speisen geladen." / Speisen.Länge()));
+    Ausgabe.Hinzufügen(Formatiere("    ~> Speiseangebot bereit. %d Speisen geladen." / Speisen.Länge()));
 
 
     setze Liste von Speise Mittagessen auf [];
@@ -268,7 +279,7 @@ funk Aktualisiere(Zahl Mensa_Ort / Zahl Tages_Verschiebung) ergibt Nichts {
             Abendessen.Hinzufügen(S);
         } sonst falls ZeitSlot.Enthält("Automatenplan") {
             falls ZEIGE_MEHR_NACHRICHTEN {
-                Drucke("[NACHRICHT] Ignoriere Automat");
+                Ausgabe.Hinzufügen("[NACHRICHT] Ignoriere Automat");
             }
         } sonst {
             Drucke(Formatiere("Nicht unterstützter ZeitSlot: `%s`" / ZeitSlot));
@@ -278,16 +289,20 @@ funk Aktualisiere(Zahl Mensa_Ort / Zahl Tages_Verschiebung) ergibt Nichts {
     }
 
 
-    Drucke("======= MITTAGESSEN ========");
+    Ausgabe.Hinzufügen("======= MITTAGESSEN ========");
 
-    Gericht_Liste_Drucken(Mittagessen);
+     Ausgabe.Hinzufügen(Gericht_Liste_Drucken(Mittagessen));
 
-    Drucke("======== ABENDESSEN ========");
+    Ausgabe.Hinzufügen("======== ABENDESSEN ========");
 
-    Gericht_Liste_Drucken(Abendessen);
+    Ausgabe.Hinzufügen(Gericht_Liste_Drucken(Abendessen));
+
+    ueberweise Verflache_Ausgabe(Ausgabe);
 }
 
-funk Gericht_Liste_Drucken(Liste von Speise Eingabe) ergibt Nichts {
+funk Gericht_Liste_Drucken(Liste von Speise Eingabe) ergibt Zeichenkette {
+    setze Liste von Zeichenkette Ausgabe auf [];
+
     setze Fliesskommazahl Maximale_Protein auf 0,0;
 
     setze Zahl Zähler auf 0;
@@ -312,8 +327,8 @@ funk Gericht_Liste_Drucken(Liste von Speise Eingabe) ergibt Nichts {
             aendere VeganEmojii auf "🌱";
         }
 
-        Drucke(Formatiere("\x1b[0;32m    - %s %s | %.2f€ | %s\x1b[0m" / VeganEmojii / S.Titel / S.Preis / S.Beschreibung));
-        Drucke(Formatiere(
+        Ausgabe.Hinzufügen(Formatiere("\x1b[0;32m    - %s %s | %.2f€ | %s\x1b[0m" / VeganEmojii / S.Titel / S.Preis / S.Beschreibung));
+        Ausgabe.Hinzufügen(Formatiere(
             "\x1b[0;31m        * %3@ d Kcal        * %3@ dg. Protein        * %3@ dg. Fett          * %3@ dg. Kohl.\x1b[0m"
             / S.Kcal als Zahl
             / S.Protein_GR als Zahl
@@ -325,6 +340,24 @@ funk Gericht_Liste_Drucken(Liste von Speise Eingabe) ergibt Nichts {
 
     falls Zähler == 0 {
         // HOLY BALLS: this fails to compile if there is the ; missing
-        Drucke("    " / KEINE_DATEN);
+        Ausgabe.Hinzufügen(Formatiere("    %s" / KEINE_DATEN));
     }
+
+    ueberweise Verflache_Ausgabe(Ausgabe);
+}
+
+funk Verflache_Ausgabe(Liste von Zeichenkette Roh) ergibt Zeichenkette {
+    setze Zeichenkette Flache_Ausgabe auf "";
+    setze Zahl Ausgaben_Zaehler auf 0;
+
+    solange Ausgaben_Zaehler < Roh.Länge() {
+        setze Zeichenkette Ende auf "\n";
+        falls Ausgaben_Zaehler == Roh.Länge() {
+            aendere Ende auf "";
+        }
+        aendere Flache_Ausgabe auf Formatiere("%s%s%s" / Flache_Ausgabe / Roh[Ausgaben_Zaehler] / Ende);
+        Ausgaben_Zaehler += 1;
+    }
+
+    ueberweise Flache_Ausgabe;
 }

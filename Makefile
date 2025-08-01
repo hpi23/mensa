@@ -13,6 +13,10 @@ build: $(HPI_FILE)
 	cp $(HPI_FILE) ./sprache/crates/hpi-transpiler-c/
 	cd ./sprache/crates/hpi-transpiler-c/ && make main HPI_FILE=$(HPI_FILE) && cp ./main ../../../$(HPI_FILE).bin
 
+lib: $(HPI_FILE)
+	cp $(HPI_FILE) ./sprache/crates/hpi-transpiler-c/
+	cd ./sprache/crates/hpi-transpiler-c/ && make lib HPI_FILE=$(HPI_FILE)
+
 .PHONY: run
 
 RARGS:=
