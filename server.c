@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/select.h>
 #include <unistd.h>
 
 #define PORT 8080
@@ -20,10 +21,7 @@ void send_raw_response(int client_fd, const char *data, size_t length) {
            "Connection: close\r\n\r\n",
            length);
 
-  // Send HTTP header
   write(client_fd, header, strlen(header));
-
-  // Send raw payload (can include null bytes or shell escapes)
   write(client_fd, data, length);
 }
 
@@ -46,9 +44,13 @@ int main(int argc, char **argv) {
     exit(EXIT_FAILURE);
   }
 
+  // Allow address reuse
+  int opt = 1;
+  setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
   // Bind socket to IP/Port
   address.sin_family = AF_INET;
-  address.sin_addr.s_addr = INADDR_ANY; // Any IP
+  address.sin_addr.s_addr = INADDR_ANY;
   address.sin_port = htons(PORT);
 
   if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
@@ -56,44 +58,67 @@ int main(int argc, char **argv) {
     exit(EXIT_FAILURE);
   }
 
-  // Listen for connections
-  if (listen(server_fd, 3) < 0) {
+  if (listen(server_fd, 10) < 0) {
     perror("listen failed");
     exit(EXIT_FAILURE);
   }
 
   printf("Server listening on port %d...\n", PORT);
 
+  fd_set readfds;
+
   while (1) {
-    // Accept incoming connection
-    if ((client_fd = accept(server_fd, (struct sockaddr *)&address,
-                            (socklen_t *)&addrlen)) < 0) {
-      perror("accept failed");
-      exit(EXIT_FAILURE);
+    FD_ZERO(&readfds);
+    FD_SET(server_fd, &readfds);
+    int max_fd = server_fd;
+
+    // Wait for incoming connection (blocks efficiently)
+    int activity = select(max_fd + 1, &readfds, NULL, NULL, NULL);
+
+    if (activity < 0) {
+      perror("select error");
+      continue;
     }
 
-    // Read client request
-    read(client_fd, buffer, BUFFER_SIZE);
-    printf("Request:\n%s\n", buffer);
+    if (FD_ISSET(server_fd, &readfds)) {
+      client_fd = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
+      if (client_fd < 0) {
+        perror("accept failed");
+        continue;
+      }
 
-    DynString *prog_name = dynstring_from("SERVER");
-    DynString *location = dynstring_from("hpi");
+      // Set a 2-second timeout on read
+      struct timeval timeout = {2, 0};
+      setsockopt(client_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
-    ListNode *args = list_new();
-    __hpi_internal_list_push(args, &prog_name);
-    __hpi_internal_list_push(args, &location);
+      memset(buffer, 0, BUFFER_SIZE);
+      int bytes_read = read(client_fd, buffer, BUFFER_SIZE - 1);
+      if (bytes_read > 0) {
+        printf("Request:\n%s\n", buffer);
 
-    DynString *program_output = Haupt1(args);
-    char *res = dynstring_as_cstr(program_output);
-    send_raw_response(client_fd, res, strlen(res) - 1);
-    free(res);
-    dynstring_free(program_output);
-    list_free(args);
-    dynstring_free(location);
-    dynstring_free(prog_name);
+        DynString *prog_name = dynstring_from("SERVER");
+        DynString *location = dynstring_from("hpi");
+        ListNode *args = list_new();
 
-    close(client_fd); // Close client socket
+        __hpi_internal_list_push(args, &prog_name);
+        __hpi_internal_list_push(args, &location);
+
+        DynString *program_output = Haupt1(args);
+        char *res = dynstring_as_cstr(program_output);
+        send_raw_response(client_fd, res, strlen(res) - 1);
+
+        // Cleanup
+        free(res);
+        dynstring_free(program_output);
+        list_free(args);
+        dynstring_free(location);
+        dynstring_free(prog_name);
+      }
+
+      close(client_fd);
+    }
   }
 
+  close(server_fd);
   return 0;
 }

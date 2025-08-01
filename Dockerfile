@@ -13,13 +13,14 @@ RUN make init -j 1
 
 COPY ./cli.hpi ./mensa.hpi
 
-run make lib HPI_FILE=mensa.hpi && gcc server.c sprache/crates/hpi-transpiler-c/output.c -ggdb \                                           57%  ▓▒░
-                sprache/crates/hpi-transpiler-c/libSAP/libSAP.a \
-                -lcurl \
-                -lm \
-                -ggdb3 -o main && ./main
+RUN make lib HPI_FILE=mensa.hpi
+RUN gcc server.c sprache/crates/hpi-transpiler-c/output.c -ggdb \
+    sprache/crates/hpi-transpiler-c/libSAP/libSAP.a \
+    -lcurl \
+    -lm \
+    -ggdb3 -o main
 
 FROM archlinux
-COPY --from=builder /root/sprache/crates/hpi-transpiler-c/main /bin/mensa
+COPY --from=builder /root/mensa/main /bin/mensa
 
 CMD ["/bin/mensa"]
