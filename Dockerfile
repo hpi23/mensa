@@ -13,7 +13,6 @@ RUN make init -j 1
 
 COPY ./cli.hpi ./mensa.hpi
 COPY ./server.c ./server.c
-COPY ./run.sh /bin/run.sh
 
 RUN make lib HPI_FILE=mensa.hpi
 RUN gcc server.c sprache/crates/hpi-transpiler-c/output.c -ggdb \
@@ -25,5 +24,6 @@ RUN gcc server.c sprache/crates/hpi-transpiler-c/output.c -ggdb \
 FROM archlinux
 COPY --from=builder /root/mensa/main /bin/mensa
 
+COPY ./run.sh /bin/run.sh
 RUN chmod +x /bin/run.sh
 CMD ["/bin/run.sh"]
