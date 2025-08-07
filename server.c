@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
     exit(EXIT_FAILURE);
   }
 
-  printf("Server listening on port %d...\n", PORT);
+  printf("=== Server listening on port %d...\n", PORT);
 
   fd_set readfds;
 

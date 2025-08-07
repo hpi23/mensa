@@ -40,7 +40,7 @@ datentyp Speise auf Objekt {
 
 setze Zahl MENSA_FILMUNI auf 9603;
 setze Zahl MENSA_GRIEBNITZSEE auf 9601;
-setze Zeichenkette MENSA_URL_GENERISCH auf "https://swp.webspeiseplan.de/index.php?token=55ed21609e26bbf68ba2b19390bf7961&model=menu&location=%d&languagetype=2&_=1699354619713";
+setze Zeichenkette MENSA_URL_GENERISCH auf "https://stwwb.webspeiseplan.de/index.php?token=55ed21609e26bbf68ba2b19390bf7961&model=menu&location=%d&languagetype=2&_=%d";
 
 //
 // Funktionen.
@@ -48,7 +48,9 @@ setze Zeichenkette MENSA_URL_GENERISCH auf "https://swp.webspeiseplan.de/index.p
 
 funk Lade_Speiseangebot(Zahl Mensa_Ort / Zahl Tages_Verschiebung) ergibt Liste von Speise {
     setze Zeichenkette Körper auf "";
-    setze Zeichenkette URL auf Formatiere(MENSA_URL_GENERISCH / Mensa_Ort);
+    setze Zahl Aktuelle_Zeit auf Zeit().Unix;
+    setze Zeichenkette URL auf Formatiere(MENSA_URL_GENERISCH / Mensa_Ort / Aktuelle_Zeit);
+    Drucke(URL);
     setze Zahl Antwort_Zahl auf Http(
         "GET" /
         URL /
@@ -56,7 +58,7 @@ funk Lade_Speiseangebot(Zahl Mensa_Ort / Zahl Tages_Verschiebung) ergibt Liste v
         [
             erstelle {
                 Zeichenkette Schlüssel auf "Referer" /
-                Zeichenkette Wert auf "https://swp.webspeiseplan.de/menu" /
+                Zeichenkette Wert auf "https://stwwb.webspeiseplan.de/menu" /
             }
         ] /
         &Körper /
@@ -65,6 +67,8 @@ funk Lade_Speiseangebot(Zahl Mensa_Ort / Zahl Tages_Verschiebung) ergibt Liste v
     falls Antwort_Zahl != 200 {
         Aufgeben(1);
     }
+
+    Drucke("Heruntergeladen, Zergliedere_JSON()...");
 
     setze Speicherbox Res auf Zergliedere_JSON(Körper) als Speicherbox;
     setze Liste von Speicherbox ContentRes auf Res.Nehmen("content") als Liste von Speicherbox;
