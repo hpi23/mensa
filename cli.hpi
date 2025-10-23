@@ -98,15 +98,20 @@ funk Lade_Speiseangebot(Zahl Mensa_Ort / Zahl Tages_Verschiebung) ergibt Liste v
             setze Fließkommazahl Zucker auf ZusatzInfos.Nehmen("nwzuckerDecimal1") als Fließkommazahl;
             setze Fließkommazahl Kohlenhydrate auf ZusatzInfos.Nehmen("nwzuckerDecimal1") als Fließkommazahl;
 
-            setze Zeichenkette GerichtmerkmaleIds auf Gericht.Nehmen("gerichtmerkmaleIds") als Zeichenkette;
+            setze Zahl VeganFlaggen auf -1;
+            setze Zeichenkette MerkmaleTyp auf Gericht.NehmeTyp("gerichtmerkmaleIds");
 
-            setze Zahl VeganFlaggen auf 0;
+            falls MerkmaleTyp != "Nichts" {
+                setze Zeichenkette GerichtmerkmaleIds auf Gericht.Nehmen("gerichtmerkmaleIds") als Zeichenkette;
 
-            falls GerichtmerkmaleIds.Enthält("228") {
-                aendere VeganFlaggen auf 2;
-            } sonst falls GerichtmerkmaleIds.Enthält("229") {
-                aendere VeganFlaggen auf 1;
+                aendere VeganFlaggen auf 0;
+                falls GerichtmerkmaleIds.Enthält("228") {
+                    aendere VeganFlaggen auf 2;
+                } sonst falls GerichtmerkmaleIds.Enthält("229") {
+                    aendere VeganFlaggen auf 1;
+                }
             }
+
 
             setze Speicherbox GerichtInfos auf Gericht.Nehmen("speiseplanAdvancedGericht") als Speicherbox;
             setze Zeichenkette GerichtDatumRoh auf GerichtInfos.Nehmen("datum") als Zeichenkette;
@@ -323,9 +328,11 @@ funk Gericht_Liste_Drucken(Liste von Speise Eingabe) ergibt Zeichenkette {
     solange Zähler < Eingabe.Länge() {
         setze Speise S auf Eingabe[Zähler];
 
-        setze Zeichenkette VeganEmojii auf "🚫";
+        setze Zeichenkette VeganEmojii auf "?";
 
-        falls S.VeganFlaggen == 1 {
+        falls S.VeganFlaggen == 0 {
+            aendere VeganEmojii auf "🚫";
+        } sonst falls S.VeganFlaggen == 1 {
             aendere VeganEmojii auf "🐄";
         } sonst falls S.VeganFlaggen == 2 {
             aendere VeganEmojii auf "🌱";
