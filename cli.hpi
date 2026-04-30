@@ -40,6 +40,7 @@ datentyp Speise auf Objekt {
 
 setze Zahl MENSA_FILMUNI auf 9603;
 setze Zahl MENSA_GRIEBNITZSEE auf 9601;
+setze Zahl MENSA_NEUES_PALAIS auf 9600;
 setze Zeichenkette MENSA_URL_GENERISCH auf "https://stwwb.webspeiseplan.de/index.php?token=55ed21609e26bbf68ba2b19390bf7961&model=menu&location=%d&languagetype=2&_=%d";
 
 //
@@ -240,6 +241,8 @@ funk Haupt(Liste von Zeichenkette Args) ergibt Zeichenkette {
         ändere Mensa_Ort auf MENSA_GRIEBNITZSEE;
     } sonst falls Eingabe == "filmuni" {
         ändere Mensa_Ort auf MENSA_FILMUNI;
+    } sonst falls Eingabe == "np" || Eingabe == "palais" || Eingabe == "china" {
+        ändere Mensa_Ort auf MENSA_NEUES_PALAIS;
     } sonst falls Eingabe == "bernau" {
         Drucke(Formatiere("Gefährlicher Standort: <%s>\nValide, weniger gefährliche Standorte:\n    - hpi\n    - filmuni" / Eingabe));
         Drucke("UND: wurde in Bernau überhaupt schon Essen erfunden? - Oder gibt es da nur Salz?");
